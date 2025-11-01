@@ -21,7 +21,7 @@ def stream_users_in_batches(batch_size):
             yield row
             
     except Error as e:
-        print(e)
+        return (e)
 
 
 def batch_processing(batch_size):
@@ -43,4 +43,4 @@ def batch_processing(batch_size):
             yield row
             
     except Error as e:
-        print(e)
+        return (e)
