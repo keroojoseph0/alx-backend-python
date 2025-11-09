@@ -20,3 +20,5 @@ with connect(
     user = 'root'
 ) as connection:
     connection_db = DatabaseConnection(connection)
+    cursor = connection_db.cursor()
+    cursor.execute('SELECT * FROM users')
