@@ -56,19 +56,19 @@ class TestGetJson(unittest.TestCase):
 
 class TestMemoize(unittest.TestCase):
     """Test the utils.memoize decorator to ensure caching works correctly."""
+
     def test_memoize(self):
+        """Test that memoized property caches the result and calls the method only once."""
         class TestClass:
             def a_method(self):
                 return 42
 
             @memoize
             def a_property(self):
-                """Test the utils.memoize decorator to correctly."""
                 return self.a_method()
 
         obj = TestClass()
         with patch.object(TestClass, 'a_method', return_value=42) as mock:
-            """Test the utils.memoize decorator to correctly."""
             result1 = obj.a_property
             result2 = obj.a_property
 
