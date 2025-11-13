@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+Unit tests for the GithubOrgClient class.
+
+Tests include:
+- org property
+- _public_repos_url property
+- public_repos method
+"""
 import unittest
 from unittest.mock import patch, PropertyMock
 from parameterized import parameterized
