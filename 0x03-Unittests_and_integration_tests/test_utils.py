@@ -63,6 +63,7 @@ class TestMemoize(unittest.TestCase):
 
             @memoize
             def a_property(self):
+                """Test the utils.memoize decorator to ensure caching works correctly."""
                 return self.a_method()
 
         obj = TestClass()
