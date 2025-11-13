@@ -10,6 +10,7 @@ Unit tests cover:
 
 Integration tests cover:
 - public_repos method using realistic fixtures
+- public_repos with license filter
 """
 
 import unittest
@@ -28,7 +29,7 @@ class TestGithubOrgClient(unittest.TestCase):
     ])
     @patch("client.get_json")
     def test_org(self, org_name, mock_get_json):
-        """Test that org returns and get_json is called once."""
+        """Test that org returns correct value and get_json is called once."""
         mock_get_json.return_value = {"mocked": True}
 
         client = GithubOrgClient(org_name)
@@ -40,7 +41,7 @@ class TestGithubOrgClient(unittest.TestCase):
         )
 
     def test_public_repos_url(self):
-        """Test that _public_repos_url url from org property."""
+        """Test that _public_repos_url returns the repos_url from org property."""
         payload = {"repos_url": "https://api.github.com/orgs/test/repos"}
         client = GithubOrgClient("test_org")
 
@@ -114,7 +115,13 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         cls.get_patcher.stop()
 
     def test_public_repos(self):
-        """Test that public_repos returns expected repository names."""
+        """Test that public_repos returns all repository names."""
         client = GithubOrgClient(self.org_payload["login"])
         repos = client.public_repos()
         self.assertEqual(repos, self.expected_repos)
+
+    def test_public_repos_with_license(self):
+        """Test that public_repos returns repos filtered by license."""
+        client = GithubOrgClient(self.org_payload["login"])
+        apache_repos = client.public_repos(license="apache-2.0")
+        self.assertEqual(apache_repos, self.apache2_repos)
