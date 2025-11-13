@@ -10,6 +10,7 @@ Tests include:
 import unittest
 from parameterized import parameterized
 from unittest.mock import patch, Mock
+from client import GithubOrgClient
 from utils import access_nested_map, get_json, memoize
 
 
@@ -75,3 +76,25 @@ class TestMemoize(unittest.TestCase):
             self.assertEqual(result1, 42)
             self.assertEqual(result2, 42)
             mock.assert_called_once()
+
+
+class TestGithubOrgClient(unittest.TestCase):
+    """Test GithubOrgClient.org method."""
+
+    @parameterized.expand([
+        ("google",),
+        ("abc",)
+    ])
+    @patch("client.get_json")
+    def test_org(self, org_name, mock_get_json):
+        """Test that org() returns correct value and get_json is called once."""
+        mock_get_json.return_value = {"mocked": True}
+
+        client = GithubOrgClient(org_name)
+        result = client.org()
+
+        # Check the result is what mock returns
+        self.assertEqual(result, {"mocked": True})
+
+        # Check get_json was called exactly once with correct URL
+        mock_get_json.assert_called_once_with(f"https://api.github.com/orgs/{org_name}")
