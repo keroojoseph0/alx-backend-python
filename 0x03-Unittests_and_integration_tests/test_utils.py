@@ -58,7 +58,7 @@ class TestMemoize(unittest.TestCase):
     """Test the utils.memoize decorator to ensure caching works correctly."""
 
     def test_memoize(self):
-        """Test that memoized property caches the result and calls the method only once."""
+        """Test that memoized property caches only once."""
         class TestClass:
             def a_method(self):
                 return 42
