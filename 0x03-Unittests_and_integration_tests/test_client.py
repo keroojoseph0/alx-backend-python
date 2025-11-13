@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock
 from parameterized import parameterized
 from client import GithubOrgClient
 
@@ -22,3 +22,12 @@ class TestGithubOrgClient(unittest.TestCase):
         self.assertEqual(result, {"mocked": True})
         mock_get_json.assert_called_once_with(f"https://api.github.com/orgs/{org_name}")
 
+    def test_public_repos_url(self):
+        """Test that _public_repos_url returns the repos_url from org property."""
+        payload = {"repos_url": "https://api.github.com/orgs/test/repos"}
+        client = GithubOrgClient("test_org")
+
+        with patch("client.GithubOrgClient.org", new_callable=PropertyMock) as mock_org:
+            mock_org.return_value = payload
+            result = client._public_repos_url
+            self.assertEqual(result, payload["repos_url"])
