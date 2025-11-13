@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+Unit tests for the utils module.
+
+Tests include:
+- access_nested_map function
+- get_json function with mocked HTTP requests
+- memoize decorator
+"""
 import unittest
 from parameterized import parameterized
 from unittest.mock import patch, Mock
@@ -44,6 +52,7 @@ class TestGetJson(unittest.TestCase):
 
 
 class TestMemoize(unittest.TestCase):
+    """Test the utils.memoize decorator to ensure caching works correctly."""
     def test_memoize(self):
         class TestClass:
             def a_method(self):
