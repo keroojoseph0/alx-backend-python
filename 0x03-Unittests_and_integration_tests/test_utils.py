@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""
-Unit tests for utils module.
-
-Contains tests for:
-- access_nested_map
-- get_json
-- memoize decorator
-"""
-
 import unittest
 from parameterized import parameterized
 from unittest.mock import patch, Mock
@@ -16,7 +7,6 @@ from utils import access_nested_map, get_json, memoize
 
 class TestAccessNestedMap(unittest.TestCase):
     """Test cases for utils.access_nested_map function."""
-    
     @parameterized.expand([
         ({"a": 1}, ("a",), 1),
         ({"a": {"b": 2}}, ("a",), {"b": 2}),
@@ -37,7 +27,6 @@ class TestAccessNestedMap(unittest.TestCase):
 
 class TestGetJson(unittest.TestCase):
     """Test cases for utils.get_json function using mocked HTTP calls."""
-     
     @parameterized.expand([
         ("http://example.com", {"payload": True}),
         ("http://holberton.io", {"payload": False}),
