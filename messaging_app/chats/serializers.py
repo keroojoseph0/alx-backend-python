@@ -11,16 +11,26 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'passwoerd_hash': {'write_only': True, 'required': True},
         }
+        
+    def validate_email(self, value):
+        if '@' not in value:
+            raise serializers.ValidationError('Not Valid Email')
+        return value
 
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only = True)
+    message_body = serializers.CharField()
+    sender_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
-        fields = ['message_id', 'sender', 'conversation', 'message_body', 'send_at']
+        fields = ['message_id', 'sender', 'sender_name', 'conversation', 'message_body', 'send_at']
         
         read_only_fields = ['message_id', 'sent_at']
+            
+    def get_sender_name(self, obj):
+        return f"{obj.sender.first_name} {obj.sender.last_name}".strip()
         
         
 class ConversationSerializer(serializers.ModelSerializer):
