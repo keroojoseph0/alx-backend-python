@@ -33,3 +33,22 @@ import requests
 def get_json(url):
     response = requests.get(url)
     return response.json()
+
+
+# 🧪 Task 3: Test Memoization
+
+## 🎯 Objective
+Test the `utils.memoize` decorator to ensure that a decorated method caches its result, so repeated calls do not recompute the value.
+
+---
+
+## 🧩 Understanding Memoization
+Memoization caches the result of a method/property.  
+Example:
+
+```python
+class TestClass:
+    @memoize
+    def a_property(self):
+        return self.a_method()
+
