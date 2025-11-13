@@ -15,3 +15,21 @@ from utils import access_nested_map
 
 result = access_nested_map({"a": {"b": 2}}, ("a", "b"))
 print(result)  # Output: 2
+
+
+# 🧪 Task 2: Mock HTTP Calls
+
+## 🎯 Objective
+Write unit tests for the `utils.get_json` function **without making real HTTP requests**.  
+You’ll use **mocking** to simulate the behavior of the `requests.get` method.
+
+---
+
+## 🧩 Understanding the Function
+The `get_json(url)` function likely looks like this:
+```python
+import requests
+
+def get_json(url):
+    response = requests.get(url)
+    return response.json()
