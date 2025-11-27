@@ -1,35 +1,8 @@
 from rest_framework import serializers
 from .models import User, Message, Conversation
+from .auth import UserSerializer
 
 
-class SignUpSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = User
-        fields = ['email','first_name', 'last_name', 'password']
-        
-        extra_kwargs = {
-            'email': {'required': True, 'allow_blank': False},
-            'first_name': {'required': True, 'allow_blank': False},
-            'last_name': {'required': True, 'allow_blank': False},
-            'password': {'required': True, 'allow_blank': False, 'write_only': True},
-        }
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['user_id', 'first_name', 'last_name', 'email', 'password_hash', 'phone_number', 'role', 'created_at']
-        
-        read_only_fields = ['user_id', 'created_at']
-        
-        extra_kwargs = {
-            'passwoerd_hash': {'write_only': True, 'required': True},
-        }
-        
-    def validate_email(self, value):
-        if '@' not in value:
-            raise serializers.ValidationError('Not Valid Email')
-        return value
 
 
 # serializers.py
