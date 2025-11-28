@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from .managers import UserManager
+from django.utils.text import slugify
 
 # Create your models here.
 
@@ -46,12 +47,20 @@ class Conversation(models.Model):
         editable=False,
         db_index=True
     )
-    participants_id = models.ManyToManyField(User, related_name='conversations')
+    conversation_name = models.CharField(max_length=100, blank=True, null=True)
+    participants = models.ManyToManyField(User, related_name='conversations')
     created_at = models.DateTimeField(auto_now_add=True)
+    slug = models.SlugField(unique=True, null=True, blank=True)
     
     def __str__(self):
-        return f'{self.conversation_id}'
+        return f'{self.conversation_name}'
     
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.conversation_name) if self.conversation_name else str(self.conversation_id)
+        super().save(*args, **kwargs)
+        
+        
 class Message(models.Model):
     message_id = models.UUIDField(
         primary_key=True,
@@ -63,3 +72,6 @@ class Message(models.Model):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
     message_body = models.TextField(null = False)
     sent_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return str(self.message_body)

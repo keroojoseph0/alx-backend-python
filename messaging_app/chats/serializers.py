@@ -55,10 +55,18 @@ class MessageSerializer(serializers.ModelSerializer):
             })
         
 class ConversationSerializer(serializers.ModelSerializer):
-    participants = UserSerializer(many=True, read_only=True)
+    participants_username = serializers.SerializerMethodField()
+    participants_count = serializers.SerializerMethodField()
     messages = MessageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Conversation
-        fields = ['conversation_id', 'participants_id', 'participants', 'messages', 'created_at']
+        fields = ['conversation_id', 'conversation_name', 'participants', 'participants_username', 'messages', 'created_at', 'participants_count']
         
+    def get_participants_username(self, obj):
+        # Return list of usernames
+        return list(obj.participants.values_list('username', flat=True))
+    
+    def get_participants_count(self, obj):
+        return obj.participants.count()
+    

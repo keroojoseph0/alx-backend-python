@@ -9,5 +9,14 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # Instance must have an attribute named `owner`.
-        return obj.owner == request.user
+        # Instance must have an attribute named `sender_id`.
+        if hasattr(obj, 'sender_id'):
+            return obj.sender_id == request.user
+        
+        
+class IsConversationParticipant(permissions.BasePermission):
+    
+    def has_object_permission(self, request, view, obj):
+        
+        if hasattr(obj, 'participants'):
+            return obj.participants == request.user
