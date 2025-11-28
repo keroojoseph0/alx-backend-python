@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view, permission_classes
 from .models import User
 from django.contrib.auth.hashers import make_password
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
-from .permissions import IsOwnerOrReadOnly, IsConversationParticipant
+from .permissions import IsConversationParticipant, IsMessageOwnerOrParticipant, CanSendMessage
 from rest_framework.views import APIView
 from .auth import LoginSerializer, UserSerializer, SignUpSerializer
 from django.contrib.auth import authenticate
@@ -75,13 +75,13 @@ class LogoutView(APIView):
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all().prefetch_related('participants', 'messages')
     serializer_class = ConversationSerializer
-    permission_classes = [IsConversationParticipant]
+    permission_classes = [IsConversationParticipant, IsMessageOwnerOrParticipant]
     lookup_field = 'slug'
     
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all().select_related('sender_id', 'conversation')
     serializer_class = MessageSerializer
-    permission_classes = [IsOwnerOrReadOnly, IsConversationParticipant]
+    permission_classes = [IsMessageOwnerOrParticipant, IsConversationParticipant, CanSendMessage]
     
 
 
