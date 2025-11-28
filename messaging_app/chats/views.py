@@ -13,6 +13,8 @@ from rest_framework.views import APIView
 from .auth import LoginSerializer, UserSerializer, SignUpSerializer
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from .pagination import MessagePagination
+from .filters import MessageFilter
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -82,6 +84,12 @@ class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all().select_related('sender_id', 'conversation')
     serializer_class = MessageSerializer
     permission_classes = [IsMessageOwnerOrParticipant, IsConversationParticipant, CanSendMessage]
+    pagination_class = MessagePagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = MessageFilter
+    search_fields = ['content']
+    ordering_fields = ['timestamp', 'sender']
+    ordering = ['-timestamp']
     
 
 
