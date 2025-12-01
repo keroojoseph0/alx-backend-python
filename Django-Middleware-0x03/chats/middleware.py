@@ -256,3 +256,293 @@ class OffensiveLanguageMiddleware:
             'blocked_info': blocked_info,
             'all_time_count': len(self.message_counts[ip_address])
         }
+        
+        
+class RolePermissionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        
+        # Define role-based permissions
+        self.role_permissions = {
+            'admin': {
+                'allowed_paths': [
+                    '/admin/',
+                    '/api/admin/',
+                    '/api/users/',
+                    '/api/settings/',
+                    '/api/reports/',
+                    '/api/analytics/',
+                    '/dashboard/',
+                ],
+                'allowed_methods': ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+                'description': 'Full access to all admin functions'
+            },
+            'moderator': {
+                'allowed_paths': [
+                    '/api/moderate/',
+                    '/api/content/',
+                    '/api/comments/',
+                    '/api/posts/',
+                    '/moderator/',
+                ],
+                'allowed_methods': ['GET', 'POST', 'PUT', 'DELETE'],
+                'description': 'Content moderation access'
+            },
+            'user': {
+                'allowed_paths': [
+                    '/api/profile/',
+                    '/api/messages/',
+                    '/api/comments/',
+                    '/api/posts/',
+                    '/api/likes/',
+                ],
+                'allowed_methods': ['GET', 'POST', 'PUT'],
+                'description': 'Regular user access'
+            },
+            'guest': {
+                'allowed_paths': [
+                    '/api/public/',
+                    '/api/posts/public/',
+                    '/api/comments/public/',
+                    '/',
+                ],
+                'allowed_methods': ['GET'],
+                'description': 'Read-only public access'
+            }
+        }
+        
+        # Define public paths that don't require role checking
+        self.public_paths = [
+            '/api/auth/login/',
+            '/api/auth/register/',
+            '/api/auth/token/refresh/',
+            '/api/public/',
+            '/admin/login/',
+            '/health/',
+            '/robots.txt',
+            '/favicon.ico',
+        ]
+        
+        # Define admin-only paths (extra protection)
+        self.admin_only_paths = [
+            '/api/admin/',
+            '/api/system/',
+            '/api/settings/global/',
+            '/api/users/bulk/',
+            '/api/database/',
+        ]
+        
+        # Map roles to required permissions
+        self.required_permissions_map = {
+            '/api/users/delete/': ['admin'],
+            '/api/settings/update/': ['admin'],
+            '/api/content/delete/': ['admin', 'moderator'],
+            '/api/comments/moderate/': ['admin', 'moderator'],
+            '/api/posts/publish/': ['admin', 'moderator'],
+        }
+    
+    def __call__(self, request):
+        # Get the requested path and method
+        path = request.path
+        method = request.method
+        
+        # Skip public paths
+        if self.is_public_path(path):
+            return self.get_response(request)
+        
+        # Get user from request
+        user = request.user
+        
+        # Check if user is authenticated
+        if not user.is_authenticated:
+            logger.warning(f"Unauthenticated access attempt to {path}")
+            return JsonResponse({
+                'error': 'Authentication required',
+                'message': 'You must be logged in to access this resource',
+                'status': 401
+            }, status=401)
+        
+        # Determine user's role
+        user_role = self.get_user_role(user)
+        
+        # Check if user has access to the requested path
+        if not self.has_permission(user_role, path, method):
+            logger.warning(
+                f"Permission denied - User: {user.username}, "
+                f"Role: {user_role}, Path: {path}, Method: {method}"
+            )
+            
+            return JsonResponse({
+                'error': 'Permission denied',
+                'message': f'You do not have permission to access this resource',
+                'required_role': self.get_required_role_for_path(path),
+                'your_role': user_role,
+                'path': path,
+                'method': method,
+                'status': 403
+            }, status=403)
+        
+        # Check for specific permission requirements
+        required_permissions = self.get_required_permissions(path)
+        if required_permissions and user_role not in required_permissions:
+            logger.warning(
+                f"Insufficient permissions - User: {user.username}, "
+                f"Role: {user_role}, Required: {required_permissions}"
+            )
+            
+            return JsonResponse({
+                'error': 'Insufficient permissions',
+                'message': 'Your role does not have sufficient permissions for this action',
+                'required_roles': required_permissions,
+                'your_role': user_role,
+                'action': self.get_action_description(path),
+                'status': 403
+            }, status=403)
+        
+        # Add role information to request for use in views
+        request.user_role = user_role
+        request.user_permissions = self.get_user_permissions(user_role)
+        
+        # Log successful access (optional, for auditing)
+        if path in self.admin_only_paths or user_role == 'admin':
+            logger.info(
+                f"Admin access - User: {user.username}, "
+                f"Role: {user_role}, Path: {path}"
+            )
+        
+        # Process the request
+        response = self.get_response(request)
+        
+        # Add role information to response headers (optional)
+        response['X-User-Role'] = user_role
+        response['X-User-Permissions'] = ','.join(request.user_permissions)
+        
+        return response
+    
+    def get_user_role(self, user):
+        """
+        Determine the user's role.
+        This can be customized based on your user model structure.
+        """
+        # Method 1: Check if user is staff/superuser
+        if user.is_superuser:
+            return 'admin'
+        elif user.is_staff:
+            return 'moderator'  # or 'staff' based on your logic
+        
+        # Method 2: Check user groups
+        if user.groups.filter(name='Administrators').exists():
+            return 'admin'
+        elif user.groups.filter(name='Moderators').exists():
+            return 'moderator'
+        elif user.groups.filter(name='Premium Users').exists():
+            return 'premium_user'
+        
+        # Method 3: Check custom profile field (if you have one)
+        try:
+            # Assuming you have a UserProfile model with a 'role' field
+            return user.profile.role
+        except AttributeError:
+            pass
+        
+        # Method 4: Check based on username or email pattern
+        if hasattr(user, 'email') and user.email.endswith('@admin.com'):
+            return 'admin'
+        
+        # Default role
+        return 'user'
+    
+    def has_permission(self, role, path, method):
+        """
+        Check if the role has permission to access the path with given method
+        """
+        if role not in self.role_permissions:
+            return False
+        
+        role_config = self.role_permissions[role]
+        
+        # Check if path is allowed for this role
+        path_allowed = any(
+            path.startswith(allowed_path) or 
+            path == allowed_path.rstrip('/')
+            for allowed_path in role_config['allowed_paths']
+        )
+        
+        if not path_allowed:
+            return False
+        
+        # Check if method is allowed for this role
+        if method not in role_config['allowed_methods']:
+            return False
+        
+        return True
+    
+    def is_public_path(self, path):
+        """
+        Check if the path is public and doesn't require authentication
+        """
+        # Check exact match or path starts with
+        return any(
+            path == public_path.rstrip('/') or
+            path.startswith(public_path)
+            for public_path in self.public_paths
+        )
+    
+    def get_required_role_for_path(self, path):
+        """
+        Determine which roles can access a specific path
+        """
+        allowed_roles = []
+        for role, config in self.role_permissions.items():
+            if any(path.startswith(allowed_path) for allowed_path in config['allowed_paths']):
+                allowed_roles.append(role)
+        return allowed_roles
+    
+    def get_required_permissions(self, path):
+        """
+        Get required permissions for a specific path
+        """
+        for permission_path, required_roles in self.required_permissions_map.items():
+            if path.startswith(permission_path):
+                return required_roles
+        return None
+    
+    def get_action_description(self, path):
+        """
+        Get a human-readable description of the action
+        """
+        action_map = {
+            '/api/users/delete/': 'Delete users',
+            '/api/settings/update/': 'Update system settings',
+            '/api/content/delete/': 'Delete content',
+            '/api/comments/moderate/': 'Moderate comments',
+            '/api/posts/publish/': 'Publish posts',
+        }
+        
+        for action_path, description in action_map.items():
+            if path.startswith(action_path):
+                return description
+        
+        return 'Perform action'
+    
+    def get_user_permissions(self, role):
+        """
+        Get list of permissions for a specific role
+        """
+        if role not in self.role_permissions:
+            return []
+        
+        permissions = []
+        role_config = self.role_permissions[role]
+        
+        # Convert allowed paths to permission names
+        for path in role_config['allowed_paths']:
+            permission_name = path.strip('/').replace('/', '_').replace('-', '_')
+            if permission_name:
+                permissions.append(permission_name)
+        
+        # Add method-based permissions
+        for method in role_config['allowed_methods']:
+            permissions.append(f"can_{method.lower()}")
+        
+        return permissions
