@@ -33,7 +33,7 @@ class MessagingModelsTests(TestCase):
         self.assertEqual(message.receiver, self.receiver)
         self.assertEqual(message.content, "Hello, this is a test message!")
         self.assertFalse(message.is_read)
-        self.assertIsNotNone(message.send_at)
+        self.assertIsNotNone(message.timestamp)
     
     def test_notification_creation(self):
         """Test creating a notification"""
@@ -182,7 +182,7 @@ class MessagingSignalsTests(TestCase):
         message.delete()
         
         # Verify notification was also deleted
-        notification_exists_after = Notification.objects.filter(message_id=message.id).exists()
+        notification_exists_after = Notification.objects.filter(message_id=message.pk).exists()
         self.assertFalse(notification_exists_after)
 
 
