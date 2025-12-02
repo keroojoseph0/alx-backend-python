@@ -14,4 +14,5 @@ urlpatterns = [
     path('user/delete/<str:pk>/', views.delete_user, name = 'delete_user'), # type: ignore
     path('message/<int:parent_id>/reply/', views.ReplyMessageView.as_view(), name='reply_message'), # type: ignore
     path('conversation/<int:message_id>/', views.conversation_view),
+    path('unread/message/', views.unread_message),
 ]

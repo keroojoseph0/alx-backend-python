@@ -1,6 +1,0 @@
-messages = (
-    Message.objects
-        .filter(sender=user.id)
-        .select_related ("messages")
-        .prefetch_related("replies")
-)

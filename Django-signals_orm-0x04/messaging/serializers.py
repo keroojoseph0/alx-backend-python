@@ -35,3 +35,13 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "password": {'write_only': True}
         }
+        
+class UnreadMessageSerializer(serializers.ModelSerializer):
+    sender = serializers.CharField(source = 'sender.username', read_only = True)
+    replies = serializers.SerializerMethodField()
+    class Meta:
+        model = Message
+        fields = ['sender', 'content', 'replies', 'timestamp', 'edited']
+    
+    def get_replies(self, obj):
+        return MessageSerializer(obj.replies.all(), many=True).data

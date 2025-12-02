@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from .models import Message, Notification, MessageHistory
-from .serializers import MessageSerializer, NotificationSerializer, MessageHistorySerializer, UserSerializer
+from .serializers import MessageSerializer, NotificationSerializer, MessageHistorySerializer, UserSerializer, UnreadMessageSerializer
 from rest_framework.generics import ListAPIView, CreateAPIView
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
@@ -85,3 +85,15 @@ def conversation_view(request, message_id):
     threaded_messages = get_threaded_messages(root_message)
 
     return render(request, 'messaging/conversation.html', {'threaded_messages': threaded_messages})
+
+@api_view(['GET'])
+def unread_message(request):
+    try:
+        receiver = request.user
+        messages = Message.unread.unread_for_user(receiver).only('sender', 'content', 'replies', 'edited')
+    except Message.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == 'GET':
+        serializer = UnreadMessageSerializer(messages, many = True)
+        return Response(serializer.data, status = status.HTTP_200_OK)

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
+from .managers import UnreadMessagesManager
 
 # Create your models here.
 
@@ -9,11 +10,14 @@ class Message(models.Model):
     receiver = models.ForeignKey(User, related_name='receiver_messages', on_delete=models.CASCADE)
     content = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=True)
     edited = models.BooleanField(default=False)
     edited_by = models.ForeignKey(User, related_name='edited_messages', on_delete=models.SET_NULL, null=True, blank=True)
     edited_at = models.DateTimeField(null=True, blank=True)
     parent_message = models.ForeignKey('self', on_delete=models.CASCADE, related_name='replies', null=True, blank=True)
+    
+    unread = UnreadMessagesManager()
+    objects = models.Manager()
     
     def save(self, *args, **kwargs):
         if self.pk:
@@ -56,7 +60,7 @@ class Notification(models.Model):
     notification_type = models.CharField(max_length=20, choices=NOTIFICATIONS_TYPE, default='message')
     title = models.CharField(max_length=100)
     content = models.TextField()
-    is_read = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=True)
     
     class Meta:
         indexes = [
