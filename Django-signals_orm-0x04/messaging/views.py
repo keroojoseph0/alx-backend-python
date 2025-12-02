@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 
 # Create your views here.
@@ -72,6 +73,7 @@ def get_threaded_messages(message):
     }
     return result
 
+@cache_page(60)
 def conversation_view(request, message_id):
     root_message = get_object_or_404(Message.objects.select_related('sender', 'receiver')
                                      .prefetch_related('replies__sender', 'replies__receiver'),
@@ -88,19 +90,6 @@ def unread_message(request):
     try:
         receiver = request.user
         messages = Message.unread.unread_for_user(receiver).only('sender', 'content', 'replies', 'edited')
-    except Message.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    
-    if request.method == 'GET':
-        serializer = UnreadMessageSerializer(messages, many = True)
-        return Response(serializer.data, status = status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-def test_message(request):
-    try:
-        receiver = request.user
-        messages = Message.objects.filter(sender = request.user)
     except Message.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     
