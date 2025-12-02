@@ -20,11 +20,8 @@ class SendMessageView(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         if serializer.is_valid():
-            serializer.save(sender = self.request.user)
-            
-            
-    
-    
+            serializer.save(sender = self.request.user) 
+
 class NotificationViewset(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
@@ -91,6 +88,19 @@ def unread_message(request):
     try:
         receiver = request.user
         messages = Message.unread.unread_for_user(receiver).only('sender', 'content', 'replies', 'edited')
+    except Message.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == 'GET':
+        serializer = UnreadMessageSerializer(messages, many = True)
+        return Response(serializer.data, status = status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def test_message(request):
+    try:
+        receiver = request.user
+        messages = Message.objects.filter(sender = request.user)
     except Message.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     
