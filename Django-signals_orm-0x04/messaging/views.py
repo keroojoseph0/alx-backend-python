@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework import viewsets
-from .models import Message, Notification
-from .serializers import MessageSerializer, NotificationSerializer
-from django.views.generic import CreateView
+from .models import Message, Notification, MessageHistory
+from .serializers import MessageSerializer, NotificationSerializer, MessageHistorySerializer
+from rest_framework.generics import ListAPIView
 # Create your views here.
 
 class SendMessageView(viewsets.ModelViewSet):
@@ -19,3 +19,8 @@ class SendMessageView(viewsets.ModelViewSet):
 class NotificationViewset(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
+
+class MessageHistoryListView(ListAPIView):
+    queryset = MessageHistory.objects.all()
+    serializer_class = MessageHistorySerializer
+    

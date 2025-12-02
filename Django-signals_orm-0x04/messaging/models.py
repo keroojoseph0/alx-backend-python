@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 
 # Create your models here.
+
 class Message(models.Model):
     sender = models.ForeignKey(User, related_name='messages', on_delete=models.CASCADE)
     receiver = models.ForeignKey(User, related_name='messaes', on_delete=models.CASCADE)
@@ -58,3 +59,19 @@ class Notification(models.Model):
     @property
     def related_message(self):
         return self.message
+    
+    
+class MessageHistory(models.Model):
+    sender = models.ForeignKey(User, related_name='messages_history_sender', on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, related_name='messaes_history_receiver', on_delete=models.CASCADE)
+    content = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now=True)
+    is_read = models.BooleanField()
+    
+    class Meta:
+        indexes = [
+            models.Index(fields = ['receiver', 'is_read']),
+        ]
+    
+    def __str__(self):
+        return f"Message History from {self.sender.username} to {self.receiver.username}"

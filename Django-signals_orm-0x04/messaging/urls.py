@@ -10,4 +10,5 @@ app_name = 'messaging'
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('message_history/', views.MessageHistoryListView.as_view(), name = 'message_history'),
 ]
