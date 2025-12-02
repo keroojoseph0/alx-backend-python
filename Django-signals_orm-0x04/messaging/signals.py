@@ -21,7 +21,7 @@ def send_notification(sender, instance, created, **kwargs):
             print(f"Error creating notification: {e}")
 
 @receiver(post_delete, sender = Message)
-def cleanup_notifications_on_message_delete(sender, instance, created, **kwargs):
+def cleanup_notifications_on_message_delete(sender, instance, **kwargs):
     instance.notifications.all().delete()
     
     
@@ -32,10 +32,10 @@ def create_welcome_notification(sender, instance, created, **kwargs):
     """
     if created:
         Notification.objects.create(
-            user=instance,
+            sender=instance,
             notification_type='system',
             title="Welcome to our messaging system!",
-            content="Thank you for joining. You can now send and receive messages."
+            content="Thank you for joining. You can now send and receive messages.",
         )
         print(f"Welcome notification created for new user: {instance.username}")
         
@@ -68,3 +68,14 @@ def one_time_message_history_save(sender, instance, created, **kwargs):
         except Exception as e:
             print(f"Error creating notification: {e}")
         post_save.disconnect(one_time_message_history_save, sender = Message)
+        
+
+@receiver(post_delete, sender = User)
+def delete_user_related_after_delete_user(sender, instance, **kwargs):
+    messages = Message.objects.filter(sender = instance)
+    notifications = Notification.objects.filter(sender = instance)
+    messages_history = MessageHistory.objects.filter(sender = instance)
+    
+    messages.delete()
+    notifications.delete()
+    messages_history.delete()

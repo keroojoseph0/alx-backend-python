@@ -11,4 +11,5 @@ app_name = 'messaging'
 urlpatterns = [
     path('', include(router.urls)),
     path('message_history/', views.MessageHistoryListView.as_view(), name = 'message_history'),
+    path('user/delete/<str:pk>/', views.delete_user, name = 'delete_user'), # type: ignore
 ]
