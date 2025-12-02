@@ -12,4 +12,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('message_history/', views.MessageHistoryListView.as_view(), name = 'message_history'),
     path('user/delete/<str:pk>/', views.delete_user, name = 'delete_user'), # type: ignore
+    path('message/<int:parent_id>/reply/', views.ReplyMessageView.as_view(), name='reply_message'), # type: ignore
+    path('conversation/<int:message_id>/', views.conversation_view),
 ]

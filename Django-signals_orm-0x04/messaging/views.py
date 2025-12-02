@@ -2,12 +2,15 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from .models import Message, Notification, MessageHistory
 from .serializers import MessageSerializer, NotificationSerializer, MessageHistorySerializer, UserSerializer
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
 
 # Create your views here.
 
@@ -48,3 +51,36 @@ def delete_user(request, pk):
             {'message': 'User deleted successfully'}, 
             status=status.HTTP_204_NO_CONTENT
         )
+ 
+@method_decorator(csrf_exempt, name='dispatch')      
+class ReplyMessageView(CreateAPIView):
+    serializer_class = MessageSerializer
+    
+    def perform_create(self, serializer):
+        parent_id = self.kwargs['parent_id']
+        parent = Message.objects.get(pk = parent_id)
+        
+        serializer.save(
+            sender=self.request.user,
+            receiver=parent.receiver,
+            parent_message=parent
+        )
+        
+# Recursive function to return message and replies
+def get_threaded_messages(message):
+    """Return a message and all its replies in a nested/threaded structure."""
+    result = {
+        'message': message,
+        'replies': [get_threaded_messages(reply) for reply in message.replies.all()]
+    }
+    return result
+
+def conversation_view(request, message_id):
+    root_message = get_object_or_404(Message.objects.select_related('sender', 'receiver')
+                                     .prefetch_related('replies__sender', 'replies__receiver'),
+                                     id=message_id)
+
+    # Fetch all replies recursively
+    threaded_messages = get_threaded_messages(root_message)
+
+    return render(request, 'messaging/conversation.html', {'threaded_messages': threaded_messages})

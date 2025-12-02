@@ -1,0 +1,10 @@
+<ul>
+{% for item in threaded_messages.replies %}
+    <li>
+        <strong>{{ item.message.sender.username }}:</strong> {{ item.message.content }}
+        {% if item.replies %}
+            {% include 'messaging/threaded_messages.html' with threaded_messages=item %}
+        {% endif %}
+    </li>
+{% endfor %}
+</ul>
