@@ -5,7 +5,7 @@ class MessageSerializer(serializers.ModelSerializer):
     sender = serializers.CharField(source = 'sender.username', read_only = True)
     class Meta:
         model = Message
-        fields = ['id', 'sender', 'receiver', 'content', 'timestamp', 'is_read']
+        fields = ['id', 'sender', 'receiver', 'content', 'timestamp', 'edited_by', 'edited_at', 'is_read', 'edited']
         
 class NotificationSerializer(serializers.ModelSerializer):
     receiver = serializers.CharField(source = 'receiver.username', read_only = True)
@@ -19,4 +19,4 @@ class NotificationSerializer(serializers.ModelSerializer):
 class MessageHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = MessageHistory
-        fields = ['id', 'sender', 'receiver', 'content', 'timestamp', 'is_read']
+        fields = ['id', 'sender', 'receiver', 'content', 'timestamp', 'edited_by', 'edited_at', 'is_read', 'edited']

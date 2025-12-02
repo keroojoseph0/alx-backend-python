@@ -10,6 +10,19 @@ class Message(models.Model):
     content = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
+    edited = models.BooleanField(default=False)
+    edited_by = models.ForeignKey(User, related_name='edited_messages', on_delete=models.SET_NULL, null=True, blank=True)
+    edited_at = models.DateTimeField(null=True, blank=True)
+    
+    def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                old_message = Message.objects.get(pk = self.pk)
+                if old_message.content != self.content:
+                    self.edited = True
+            except Message.DoesNotExist:
+                raise Exception("Message dosn't exist")
+        super().save(*args, **kwargs)
     
     class Meta:
         indexes = [
@@ -67,6 +80,9 @@ class MessageHistory(models.Model):
     content = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now=True)
     is_read = models.BooleanField()
+    edited = models.BooleanField()
+    edited_by = models.ForeignKey(User, related_name='edited_messages_history', on_delete=models.SET_NULL, null=True, blank=True)
+    edited_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         indexes = [

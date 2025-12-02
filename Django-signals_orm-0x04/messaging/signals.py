@@ -47,7 +47,9 @@ def log_message_history(sender, instance, **kwargs):
             receiver = instance.receiver,
             content = f"You have received a new message: {instance.content[:100]}..." 
                 if len(instance.content) > 100 else instance.content,
-            is_read = instance.is_read
+            is_read = instance.is_read,
+            edited = instance.edited,
+            edited_by = instance.edited_by
         )
 
 @receiver(post_save, sender = Message)
@@ -59,7 +61,9 @@ def one_time_message_history_save(sender, instance, created, **kwargs):
             receiver = instance.receiver,
             content = f"You have received a new message: {instance.content[:100]}..." 
                 if len(instance.content) > 100 else instance.content,
-            is_read = instance.is_read
+            is_read = instance.is_read,
+            edited = instance.edited,
+            edited_by = instance.edited_by
         )
         except Exception as e:
             print(f"Error creating notification: {e}")
