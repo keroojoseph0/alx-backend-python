@@ -61,7 +61,7 @@ class ReplyMessageView(CreateAPIView):
         parent = Message.objects.get(pk = parent_id)
         
         serializer.save(
-            sender= request.user,
+            sender=self.request.user,
             receiver=parent.receiver,
             parent_message=parent
         )
@@ -77,8 +77,9 @@ def get_threaded_messages(message):
 
 def conversation_view(request, message_id):
     root_message = get_object_or_404(Message.objects.select_related('sender', 'receiver')
-                                     .prefetch_related('replies__sender', 'replies__receiver').filter(id = message_id),
-                                     id=message_id)
+                                     .prefetch_related('replies__sender', 'replies__receiver'),
+                                     id=message_id,
+                                     sender = request.user)
 
     # Fetch all replies recursively
     threaded_messages = get_threaded_messages(root_message)
