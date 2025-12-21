@@ -68,10 +68,11 @@ class Message(models.Model):
         editable=False,
         db_index=True
     )
-    sender_id = models.ForeignKey(User, related_name='messages', on_delete=models.CASCADE)
+    sender = models.ForeignKey(User, related_name='messages', on_delete=models.CASCADE)
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
     message_body = models.TextField(null = False)
     sent_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
     
     def __str__(self):
         return str(self.message_body)

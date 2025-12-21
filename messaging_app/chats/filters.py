@@ -90,7 +90,7 @@ class ConversationFilter(django_filters.FilterSet):
     
     class Meta:
         model = Conversation
-        fields = ['conversation_type']
+        fields = ['conversation_id']
     
     def filter_has_unread_messages(self, queryset, name, value):
         """
