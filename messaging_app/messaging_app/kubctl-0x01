@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Scale the Django app to 3 replicas
+kubectl scale deployment message_app --replicas=3
+
+# Verify pods are running
+kubectl get pods
+
+# Expose service locally for load testing
+kubectl port-forward service/message-app-service 8000:8000 &
+PF_PID=$!
+
+# Give port-forward time to start
+sleep 5
+
+# Run load testing using wrk (10 seconds)
+wrk -t2 -c50 -d10s http://127.0.0.1:8000
+
+# Stop port-forward
+kill $PF_PID
+
+# Monitor resource usage
+kubectl top pods
